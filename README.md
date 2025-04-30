@@ -193,7 +193,7 @@ The framework employs multiple visualization techniques to reveal theoretical st
 
 4. Persistence diagrams for topological feature stability
 
-## Current Research Status
+## Current "Research" Status
 
 This framework remains speculative with several components requiring formal mathematical proof:
 
