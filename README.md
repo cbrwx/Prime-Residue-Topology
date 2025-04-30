@@ -98,7 +98,7 @@ This function interprets the gradient direction as pointing toward the "next" pr
 
 #### 6. Lattice Reduction Implementation
 
-The prime identification algorithm employs lattice reduction in residue space:
+The prime identification algorithm employs orthogonalization-based prime candidate selection in residue space:
 
 1. Construct a lattice basis B that encodes residue-primality relationships
 2. For each integer n in the search range:
