@@ -213,7 +213,8 @@ The current theoretical framework has notable limitations:
 4. Topological features become increasingly complex at larger scales
 5. The framework cannot yet provide provable primality certification
 
-## Specific Code Modifications for Goldbach Analysis. (a geometric and topological foundation for understanding why Goldbach's conjecture should be true)
+## Specific Code Modifications for Goldbach Analysis. 
+   (a geometric and topological foundation for understanding why Goldbach's conjecture should be true)
 
 ```
 class GoldbachTopologyAnalyzer(PrimeResidueTopology):
