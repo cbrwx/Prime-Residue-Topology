@@ -11,13 +11,16 @@ that was built to test it properly.
 Every integer n has a residue fingerprint: the vector of its remainders
 (n mod m1, n mod m2, ...) across a chosen set of moduli. The fingerprints live
 in a bounded multidimensional space, and the hypothesis was that primes occupy
-that space in a structured way. Viewed from a high enough dimension, primes
-would appear as critical points of a potential field, connected by a tensor
-flow, with topological invariants (Laplacian spectra, Betti numbers, spectral
-gaps) that distinguish where primes live from where composites live, and
-perhaps even allow prediction. THEORY.md develops this in detail and primer.py
-implements it with potential fields, gradients, graph Laplacians and low
-dimensional embeddings.
+that space in a structured way. The central intuition was one of vantage
+point: a pattern that looks like noise from inside the number line should
+become visible when the observer steps up a dimension and views the residue
+space from outside, the way a knot untangles when seen from the fourth
+dimension. From high enough, primes would appear as critical points of a
+potential field, connected by a tensor flow, with topological invariants
+(Laplacian spectra, Betti numbers, spectral gaps) that distinguish where
+primes live from where composites live, and perhaps even allow prediction.
+THEORY.md develops this in detail and primer.py implements it with potential
+fields, gradients, graph Laplacians and low dimensional embeddings.
 
 The original implementation had two flaws that the rebuild removed. Its
 "primeness" potential included the factor phi(n)/(n-1), which equals 1 exactly
@@ -171,9 +174,19 @@ And measurement is not proof: the Hardy-Littlewood comparisons test an open
 conjecture numerically; they cannot settle it.
 
 The original hypothesis, in retrospect, was half right and located one
-dimension too low. Single primes in residue space are featureless, and that
-part of the space is provably flat. The structure the hypothesis reached for
-exists in the space of consecutive pairs, and it took removing every feature
+dimension too low. The higher dimensional vantage point was the correct
+instinct, but the extra dimension that mattered was not another modulus axis.
+Single primes in residue space are featureless no matter how many moduli the
+fingerprint uses, and that part of the space is provably flat. The dimension
+that had to be added was time along the sequence itself: only when each prime
+is paired with its successor, so that the observer looks at the space of
+consecutive pairs from outside, does the topology appear. The pair space view
+in the 3D explorer is that vantage point made literal. Its axes are the
+residue of a prime, the residue of the next prime, and the gap between them,
+and its colors are deviations from the gap model null. From inside the
+number line this structure is invisible; from one dimension up it is a
+depleted diagonal you can walk around. The pattern was real, it was simply
+not where the hypothesis first pointed, and it took removing every feature
 that secretly knew the answer to see it clearly.
 
 ## 5. The instrument
@@ -187,6 +200,28 @@ pair space view that renders deviations from the gap model null), and full
 run logging. A command line tool provides self tests (verified against known
 values of pi, twin counts, closed form spectra and published phenomena) and
 headless runs. Build instructions: [cpp/README.md](cpp/README.md).
+
+### The sequence auditor
+
+The analysis machinery does not care that its input is the primes, so the
+program exposes it as a general tool. The auditor reads any integer sequence
+from a file (any text containing numbers; order matters; the sequence does
+not need to be increasing) and answers the same questions the prime pipeline
+answers: does the sequence fill residue classes uniformly, do successive
+terms carry information about each other beyond their difference statistics,
+and how deep is the memory. Everything is scored out of sample against a
+difference model null, so the verdict separates genuine structure from
+structure that is merely the difference distribution in disguise.
+
+Validation runs illustrate the range. A pseudorandom stream comes back clean:
+uniform occupancy, no residue memory, order 2 accuracy at chance. The perfect
+squares light up everywhere: only quadratic residues occupied, large gains
+beyond the difference model, and a second order test that reaches 100 percent
+accuracy, which is the auditor discovering on its own that squares are
+determined by their two predecessors (constant second difference). The primes
+land in between, showing exactly the mod 3 memory described above. Available
+in the GUI (Auditor tab, with a file browser) and headless as
+`prt_cli audit <file> [q]`; audits are logged to results/ like runs.
 
 ## 6. References
 
