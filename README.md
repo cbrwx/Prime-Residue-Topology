@@ -6,6 +6,15 @@ two parts. `primer.py` and [THEORY.md](THEORY.md) are the original hypothesis
 and implementation, kept unchanged. [cpp/](cpp/) is the measurement instrument
 that was built to test it properly.
 
+For the technically inclined reader: what lives in cpp/ is a null model based
+residue transition analysis framework for integer sequences. It reproduces
+the known residue phenomena (Dirichlet, Chebyshev, Lemke Oliver and
+Soundararajan, Hardy-Littlewood), isolates the genuinely unexplained mod 3
+transition effect through a decomposition against a gap model null, measures
+its decay in operator form, and generalizes to arbitrary sequences through a
+built in auditor. The hypothesis below is the origin story of that framework,
+not its central claim.
+
 ## 1. The hypothesis
 
 Every integer n has a residue fingerprint: the vector of its remainders
@@ -85,9 +94,14 @@ and 10^11 (about 51 million, 455 million and 4.1 billion primes).
 Prime counts per residue class match the Dirichlet prediction at every
 modulus tested (3 through 210), at every scale. Typical chi square values sit
 far below their degrees of freedom; the largest single class deviation seen
-through 10^11 was under one standard deviation. There is no static pattern in
-single prime residue space. The striking geometry visible in residue space
-visualizations is the wheel (divisibility by small primes), not hidden order.
+through 10^11 was under one standard deviation. The same flatness holds
+character by character: decomposing the density field on the residue torus in
+its canonical harmonic basis, the 480 Dirichlet characters of the group of
+units mod 2310, gives an energy spectrum indistinguishable from noise (the
+top character carries 1.2 percent at 10^9, and the real characters carry
+their fair 3.3 percent share). There is no static pattern in single prime
+residue space. The striking geometry visible in residue space visualizations
+is the wheel (divisibility by small primes), not hidden order.
 
 ### Consecutive primes are correlated
 
@@ -122,6 +136,24 @@ product is consistent with the known second order correction. By contrast,
 the famous last digit view (q = 10) retains almost nothing beyond gap
 statistics at the predictor level (+0.01 pp at 10^11), even though its
 distributional deviation remains enormous.
+
+### The transition operator
+
+The residue sequence of consecutive primes can be treated as an empirical
+Markov chain, and the memory then has an operator form: the second eigenvalue
+of the transition operator. At mod 3 the operator is two by two and the
+eigenvalue is exact (trace minus one): it measures -0.1098 at 10^9 and
+-0.1001 at 10^10, negative because the chain repels its own state. The
+product of its magnitude with ln N stays near 2.27 to 2.30 across the two
+scales, so the measurement supports a conjecture shaped statement: the second
+eigenvalue behaves like minus a constant over log N, with the constant near
+2.3, and the operator's spectral gap closes toward 1 (perfect mixing) at
+exactly the rate the Hardy-Littlewood machinery predicts for the underlying
+bias. The instrument computes this eigenvalue for every modulus in the scan
+(power iteration on the deflated operator where the matrix is larger than two
+by two), which moves the analysis from visualization toward operator theory,
+where questions about invariant measures, mixing rates and the derivation of
+the observed decay become well posed.
 
 ### Memory is shallow but real
 
@@ -172,6 +204,15 @@ primality of individual numbers: the class density lift against the plain
 wheel baseline is 1.0000, so nothing here helps factoring or cryptography.
 And measurement is not proof: the Hardy-Littlewood comparisons test an open
 conjecture numerically; they cannot settle it.
+
+A note on the word topology. The load bearing mathematics in this project is
+counting compared against null models; the graphs, spectra and embeddings of
+the topology layer organize and display those counts rather than generate
+them. The rigorous form of that layer is now in the instrument twice over:
+the harmonic analysis of the density field is done in the canonical Dirichlet
+character basis of the group of units, and the transition structure is
+analyzed as a Markov operator with a measured spectrum. Where the project
+points at theory, it points there.
 
 The original hypothesis, in retrospect, was half right and located one
 dimension too low. The higher dimensional vantage point was the correct

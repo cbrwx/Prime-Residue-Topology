@@ -65,6 +65,11 @@ struct TopoReport {
     double cheeger = 0;              // lambda_2 / 2 (approximation)
     int    betti0 = 0;               // connected components of the kNN graph
     double moran = 0;                // Moran's I spatial autocorrelation of phi
+    // group Fourier (Dirichlet character) spectrum of the density field:
+    // energy fraction per character of (Z/L)*, sorted descending
+    std::vector<double> char_power;
+    std::vector<int>    char_order;  // order of each character, matching char_power
+    double char_low_frac = 0;        // energy in real characters (order <= 2)
 };
 
 struct PatternRow {
@@ -80,6 +85,10 @@ struct PatternRow {
     double resid_diag = 0;           // diagonal bias REMAINING under the gap model
     double acc_gapmodel = 0;         // out-of-sample acc of the gap-model predictor
     double gain_beyond = 0;          // acc - acc_gapmodel: the genuine correlation
+    // second eigenvalue of the empirical transition operator P(i -> j):
+    // signed (trace - 1) when there are two classes, |lambda_2| estimate otherwise.
+    // 1 - |lambda_2| is the operator's spectral gap; |lambda_2| is the memory.
+    double lambda2 = 0;
 };
 
 struct PatternScan {

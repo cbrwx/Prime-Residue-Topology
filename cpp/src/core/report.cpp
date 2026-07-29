@@ -83,6 +83,11 @@ std::string make_summary(const Results& R) {
     for (int i = 0; i < 5 && i < (int)pw.size(); ++i)
         appendf(s, "#%d (%.1f%%) ", pw[i].second, 100.0 * pw[i].first);
     appendf(s, "\n");
+    if (!R.topo.char_power.empty())
+        appendf(s, "  character spectrum (canonical basis, %zu Dirichlet characters): "
+                   "top energy %.2f%% (order %d), real characters carry %.2f%%\n",
+                R.topo.char_power.size(), 100.0 * R.topo.char_power[0],
+                R.topo.char_order[0], 100.0 * R.topo.char_low_frac);
 
     appendf(s, "\n-- pattern classification (transition-structure scan, q = 3..100) --\n");
     {
@@ -105,6 +110,12 @@ std::string make_summary(const Results& R) {
                     rows[i].q, 100.0 * rows[i].gain_beyond, 100.0 * rows[i].acc,
                     100.0 * rows[i].acc_gapmodel, 100.0 * rows[i].resid_diag,
                     rows[i].chi2_gap, rows[i].pval_gap);
+        for (const auto& row : R.patterns.rows)
+            if (row.q == 3)
+                appendf(s, "  transition operator: at q = 3 the second eigenvalue is %+.5f "
+                           "(spectral gap %.5f). |lambda2| is the operator form of the memory "
+                           "strength; its decay with N restates the decay law.\n",
+                        row.lambda2, 1.0 - std::fabs(row.lambda2));
 
         if (!rows.empty()) {
             const PatternRow* q0 = nullptr;
@@ -286,6 +297,13 @@ bool export_data(const Results& R, const std::string& dir) {
         std::fclose(f);
     }
 
+    if (FILE* f = open_csv(dir, "topology_characters.csv", ok)) {
+        std::fprintf(f, "rank,order,power_fraction\n");
+        for (size_t i = 0; i < R.topo.char_power.size(); ++i)
+            std::fprintf(f, "%zu,%d,%.8f\n", i + 1, R.topo.char_order[i], R.topo.char_power[i]);
+        std::fclose(f);
+    }
+
     if (FILE* f = open_csv(dir, "topology_spectrum.csv", ok)) {
         std::fprintf(f, "mode,eigenvalue,field_power\n");
         for (size_t k = 0; k < R.topo.eigval.size(); ++k)
@@ -296,13 +314,13 @@ bool export_data(const Results& R, const std::string& dir) {
 
     if (FILE* f = open_csv(dir, "patterns.csv", ok)) {
         std::fprintf(f, "q,chi2,pval,mean_diag_bias,acc_argmax,acc_uniform,gain,"
-                        "acc_gapmodel,gain_beyond,chi2_gapnull,pval_gapnull,resid_diag\n");
+                        "acc_gapmodel,gain_beyond,chi2_gapnull,pval_gapnull,resid_diag,lambda2\n");
         for (const auto& row : R.patterns.rows)
-            std::fprintf(f, "%u,%.6f,%.6g,%.6f,%.8f,%.8f,%.8f,%.8f,%.8f,%.6f,%.6g,%.6f\n",
+            std::fprintf(f, "%u,%.6f,%.6g,%.6f,%.8f,%.8f,%.8f,%.8f,%.8f,%.6f,%.6g,%.6f,%.8f\n",
                          row.q, row.chi2, row.pval, row.diag_bias,
                          row.acc, row.acc_uniform, row.gain,
                          row.acc_gapmodel, row.gain_beyond,
-                         row.chi2_gap, row.pval_gap, row.resid_diag);
+                         row.chi2_gap, row.pval_gap, row.resid_diag, row.lambda2);
         std::fprintf(f, "# order2 q=%u test_triples=%llu acc_order1=%.8f acc_order2=%.8f\n",
                      R.patterns.q2, (unsigned long long)R.patterns.test_triples,
                      R.patterns.acc_order1, R.patterns.acc_order2);

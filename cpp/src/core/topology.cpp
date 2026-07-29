@@ -306,6 +306,76 @@ TopoReport compute_topology(uint32_t L, const std::vector<uint32_t>& jointL, int
             num += W[(size_t)i * n + j] * xc[i] * xc[j];
     if (S0 > 0 && xnorm2 > 0) T.moran = ((double)n / S0) * (num / xnorm2);
 
+    // Group Fourier transform of the density field: the canonical harmonic
+    // basis of (Z/L)* is the Dirichlet characters (products of characters of
+    // the cyclic groups (Z/p)* for the odd primes p dividing L). Energy
+    // fraction per character; by Parseval the fractions sum to 1.
+    if (xnorm2 > 0) {
+        std::vector<uint32_t> odd_p;
+        for (uint32_t p : T.torus_dims)
+            if (p > 2) odd_p.push_back(p);
+        std::vector<std::vector<int>> ind(odd_p.size());
+        std::vector<int> ord(odd_p.size());
+        bool ok = true;
+        for (size_t d = 0; d < odd_p.size(); ++d) {
+            const uint32_t p = odd_p[d];
+            ord[d] = (int)p - 1;
+            // find a generator of (Z/p)*
+            uint32_t gen = 0;
+            for (uint32_t g = 2; g < p && !gen; ++g) {
+                uint32_t x2 = 1;
+                int t = 0;
+                do { x2 = x2 * g % p; ++t; } while (x2 != 1);
+                if (t == (int)p - 1) gen = g;
+            }
+            if (!gen) { ok = false; break; }
+            ind[d].assign(p, 0);
+            uint32_t x2 = 1;
+            for (int t = 0; t < (int)p - 1; ++t) {
+                ind[d][x2] = t;
+                x2 = x2 * gen % p;
+            }
+        }
+        if (ok && !odd_p.empty()) {
+            int nchars = 1;
+            for (int m : ord) nchars *= m;
+            const double TAU = 2.0 * 3.14159265358979323846;
+            std::vector<std::pair<double, int>> pw2;   // (power fraction, order)
+            pw2.reserve(nchars);
+            std::vector<int> a(odd_p.size(), 0);
+            for (int ci = 0; ci < nchars; ++ci) {
+                double re = 0, im = 0;
+                for (int i = 0; i < n; ++i) {
+                    const uint32_t r = T.nodes[i];
+                    double ang = 0;
+                    for (size_t d = 0; d < odd_p.size(); ++d)
+                        ang += (double)a[d] * ind[d][r % odd_p[d]] / (double)ord[d];
+                    ang *= TAU;
+                    re += xc[i] * std::cos(ang);
+                    im -= xc[i] * std::sin(ang);
+                }
+                const double frac = (re * re + im * im) / ((double)n * xnorm2);
+                int order = 1;
+                for (size_t d = 0; d < odd_p.size(); ++d) {
+                    const int od = ord[d] / (int)gcd_u64((uint64_t)a[d], (uint64_t)ord[d]);
+                    order = order / (int)gcd_u64((uint64_t)order, (uint64_t)od) * od;
+                }
+                pw2.emplace_back(frac, order);
+                for (size_t d = 0; d < odd_p.size(); ++d) {
+                    if (++a[d] < ord[d]) break;
+                    a[d] = 0;
+                }
+            }
+            std::sort(pw2.rbegin(), pw2.rend());
+            T.char_low_frac = 0;
+            for (const auto& [frac, order] : pw2) {
+                T.char_power.push_back(frac);
+                T.char_order.push_back(order);
+                if (order <= 2) T.char_low_frac += frac;
+            }
+        }
+    }
+
     return T;
 }
 

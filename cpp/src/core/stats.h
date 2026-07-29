@@ -49,6 +49,12 @@ void analyze_order2(PatternScan& ps, uint32_t q,
                     const std::vector<uint64_t>& o2_train,
                     const std::vector<uint64_t>& t1_train);
 
+// Second eigenvalue of the empirical Markov operator P(i -> j) built from a
+// q x q transition count matrix over its occupied classes. Returns the signed
+// value (trace - 1) for two classes, an |lambda_2| estimate (deflated power
+// iteration) otherwise. 0 if degenerate.
+double markov_lambda2(uint32_t q, const uint64_t* obs);
+
 // integral_2^x dt / ln^2(t)  (Simpson; the Hardy-Littlewood pair-count scale)
 double li2_integral(double x);
 

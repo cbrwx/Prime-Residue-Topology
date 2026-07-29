@@ -145,6 +145,23 @@ static void selftest() {
         check(std::fabs(sexy_over_twin - 2.0) < 0.1, "HL: g=6 enhancement ~ 2x (singular series)");
         check(R.gapgap.pearson < -0.005, "gap memory: consecutive gaps anti-correlate");
         check(R.gapgap.r2_oos > -0.05 && R.gapgap.r2_oos < 1.0, "gap memory: OOS R^2 sane");
+        // transition operator: known-eigenvalue matrices
+        {
+            const uint64_t m2[4] = {6000, 4000, 4000, 6000};       // lambda2 = +0.2 exact
+            check(std::fabs(markov_lambda2(2, m2) - 0.2) < 1e-12,
+                  "markov_lambda2: 2x2 exact (trace - 1)");
+            const uint64_t m3[9] = {2000, 1000, 1000, 1000, 2000, 1000, 1000, 1000, 2000};
+            check(std::fabs(markov_lambda2(3, m3) - 0.25) < 1e-6,
+                  "markov_lambda2: 3x3 circulant power iteration (0.25)");
+        }
+        bool l2_ok = false;
+        for (const auto& row : R.patterns.rows)
+            if (row.q == 3) l2_ok = row.lambda2 < 0;               // repulsion => negative
+        check(l2_ok, "transition operator: mod-3 lambda2 is negative (repulsion)");
+        double char_sum = 0;
+        for (double v : R.topo.char_power) char_sum += v;
+        check(!R.topo.char_power.empty() && std::fabs(char_sum - 1.0) < 1e-6,
+              "character spectrum satisfies Parseval (fractions sum to 1)");
     }
 
     std::printf("== sequence auditor ==\n");

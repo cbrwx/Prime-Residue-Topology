@@ -29,6 +29,11 @@ with every statistic tested against an explicit null model.
   decomposed against a gap model null; the surviving correlation is strongest
   at mod 3 (the bias described by Lemke Oliver and Soundararajan)
 * An order 2 Markov test measuring memory depth beyond one step
+* The second eigenvalue of the empirical transition operator for every q
+  (exact at two classes, deflated power iteration otherwise); its magnitude
+  is the operator form of the memory and decays like a constant over log N
+* The group Fourier (Dirichlet character) spectrum of the density field on
+  the torus, the canonical harmonic basis of the group of units mod L
 * Prime pair counts (p, p+g) for even g up to 120, compared against the
   Hardy-Littlewood prediction C(g) times Li2(N)
 * Chebyshev races (mod 4 and mod 3 checkpoints)

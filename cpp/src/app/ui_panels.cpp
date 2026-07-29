@@ -471,7 +471,32 @@ static void draw_topology(const Results& R) {
     ImGui::TextWrapped(
         "A flat power spectrum means the prime-density field looks like noise on "
         "the torus (no smooth low-frequency structure); sharp peaks would mean "
-        "the bias concentrates in specific harmonics (Dirichlet characters).");
+        "the bias concentrates in specific harmonics.");
+
+    ImGui::SeparatorText("Character spectrum (canonical basis)");
+    if (!T.char_power.empty()) {
+        ImGui::TextWrapped(
+            "The group (Z/L)* has an exact harmonic basis: its %zu Dirichlet "
+            "characters. This is the same decomposition, done in the canonical "
+            "basis instead of graph eigenvectors. Top character carries %.2f%% of "
+            "the field energy (order %d); real characters (order <= 2, the "
+            "quadratic-residue patterns) carry %.2f%%. A flat spectrum here is "
+            "equidistribution restated character by character.",
+            T.char_power.size(), 100.0 * T.char_power[0], T.char_order[0],
+            100.0 * T.char_low_frac);
+        static std::vector<double> cxs, cys;
+        cxs.clear(); cys.clear();
+        for (size_t i = 0; i < T.char_power.size() && i < 60; ++i) {
+            cxs.push_back((double)(i + 1));
+            cys.push_back(100.0 * T.char_power[i]);
+        }
+        if (ImPlot::BeginPlot("character energy (top 60, sorted)", ImVec2(-1, 240))) {
+            ImPlot::SetupAxes("rank", "energy (%)",
+                              ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+            ImPlot::PlotBars("energy", cxs.data(), cys.data(), (int)cxs.size(), 0.8);
+            ImPlot::EndPlot();
+        }
+    }
 }
 
 // ---------------------------------------------------------------- prediction
@@ -559,6 +584,20 @@ static void draw_patterns(const Results& R) {
         ImPlot::PlotBars("diag bias", xs.data(), diag.data(), (int)xs.size(), 0.7);
         ImPlot::EndPlot();
     }
+    static std::vector<double> l2;
+    l2.clear();
+    for (const auto& row : P.rows) l2.push_back(std::fabs(row.lambda2));
+    if (ImPlot::BeginPlot("transition operator |lambda2| vs q", ImVec2(-1, 200))) {
+        ImPlot::SetupAxes("q", "|second eigenvalue|",
+                          ImPlotAxisFlags_AutoFit, ImPlotAxisFlags_AutoFit);
+        ImPlot::PlotBars("|lambda2|", xs.data(), l2.data(), (int)xs.size(), 0.7);
+        ImPlot::EndPlot();
+    }
+    ImGui::TextWrapped(
+        "The transition matrices are Markov operators; the magnitude of the second "
+        "eigenvalue is the operator form of the one-step memory, and 1 - |lambda2| "
+        "is the operator's spectral gap. At q = 3 (two classes) the value is exact "
+        "and signed: negative means repulsion.");
 
     ImGui::SeparatorText("What the pattern is");
     const prt::PatternRow* q0 = nullptr;
@@ -590,7 +629,7 @@ static void draw_patterns(const Results& R) {
         100.0 * (P.acc_order2 - P.acc_order1));
 
     ImGui::SeparatorText("Full scan");
-    if (ImGui::BeginTable("pattab", 10, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+    if (ImGui::BeginTable("pattab", 11, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                                         ImGuiTableFlags_ScrollY, ImVec2(0, 340))) {
         ImGui::TableSetupColumn("q");
         ImGui::TableSetupColumn("chi2 indep");
@@ -602,6 +641,7 @@ static void draw_patterns(const Results& R) {
         ImGui::TableSetupColumn("beyond");
         ImGui::TableSetupColumn("chi2 gapnull");
         ImGui::TableSetupColumn("resid diag");
+        ImGui::TableSetupColumn("lambda2");
         ImGui::TableHeadersRow();
         for (const auto& row : P.rows) {
             ImGui::TableNextRow();
@@ -615,6 +655,7 @@ static void draw_patterns(const Results& R) {
             ImGui::TableNextColumn(); ImGui::Text("%+.2f pp", 100.0 * row.gain_beyond);
             ImGui::TableNextColumn(); ImGui::Text("%.0f", row.chi2_gap);
             ImGui::TableNextColumn(); ImGui::Text("%+.1f%%", 100.0 * row.resid_diag);
+            ImGui::TableNextColumn(); ImGui::Text("%+.4f", row.lambda2);
         }
         ImGui::EndTable();
     }

@@ -234,6 +234,7 @@ PatternRow analyze_transition_general(uint32_t q, const uint64_t* obs, const uin
     }
     if (gtot > 0) row.acc_gapmodel = (double)ghit / (double)gtot;
     row.gain_beyond = row.acc - row.acc_gapmodel;
+    row.lambda2 = markov_lambda2(q, obs);
     return row;
 }
 
@@ -336,6 +337,7 @@ PatternRow analyze_transition_q(uint32_t q, const uint64_t* obs, const uint64_t*
     }
     if (gtot > 0) row.acc_gapmodel = (double)ghit / (double)gtot;
     row.gain_beyond = row.acc - row.acc_gapmodel;
+    row.lambda2 = markov_lambda2(q, obs);
     return row;
 }
 
@@ -388,6 +390,57 @@ void analyze_order2(PatternScan& ps, uint32_t q,
         ps.acc_order1 = (double)hit1 / (double)tot;
         ps.acc_order2 = (double)hit2 / (double)tot;
     }
+}
+
+double markov_lambda2(uint32_t q, const uint64_t* obs) {
+    const std::vector<uint32_t> classes = occupied_classes(q, obs);
+    const int k = (int)classes.size();
+    if (k < 2) return 0.0;
+    std::vector<double> P((size_t)k * k, 0.0);
+    for (int i = 0; i < k; ++i) {
+        double rs = 0;
+        for (int j = 0; j < k; ++j)
+            rs += (double)obs[(size_t)classes[i] * q + classes[j]];
+        if (rs <= 0) return 0.0;
+        for (int j = 0; j < k; ++j)
+            P[(size_t)i * k + j] = (double)obs[(size_t)classes[i] * q + classes[j]] / rs;
+    }
+    if (k == 2) return P[0] + P[3] - 1.0;        // exact, signed
+
+    // stationary distribution via left power iteration
+    std::vector<double> pi(k, 1.0 / k), tmp(k);
+    for (int it = 0; it < 300; ++it) {
+        for (int j = 0; j < k; ++j) {
+            double s = 0;
+            for (int i = 0; i < k; ++i) s += pi[i] * P[(size_t)i * k + j];
+            tmp[j] = s;
+        }
+        pi.swap(tmp);
+    }
+    // power iteration on the deflated operator A = P - 1*pi^T
+    std::vector<double> v(k), w(k);
+    for (int i = 0; i < k; ++i) v[i] = std::sin((double)(i + 1));
+    double lam_acc = 0;
+    int lam_n = 0;
+    for (int it = 0; it < 400; ++it) {
+        double c = 0, nv = 0;
+        for (int i = 0; i < k; ++i) { c += pi[i] * v[i]; nv += v[i] * v[i]; }
+        nv = std::sqrt(nv);
+        if (nv <= 1e-300) return 0.0;
+        double nw = 0;
+        for (int i = 0; i < k; ++i) {
+            double s = 0;
+            for (int j = 0; j < k; ++j) s += P[(size_t)i * k + j] * v[j];
+            w[i] = s - c;
+            nw += w[i] * w[i];
+        }
+        nw = std::sqrt(nw);
+        const double est = nw / nv;
+        if (it >= 300) { lam_acc += est; ++lam_n; }
+        if (nw <= 1e-300) return 0.0;
+        for (int i = 0; i < k; ++i) v[i] = w[i] / nw;
+    }
+    return lam_n ? lam_acc / lam_n : 0.0;
 }
 
 double li2_integral(double x) {
